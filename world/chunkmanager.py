@@ -8,16 +8,19 @@ from settings import (
 
 class ChunkManager:
     def __init__(self, world, generator=None):
+        """Manage loading/unloading of chunk data with optional generation."""
         self.world = world
         self.chunk_dict: dict[tuple[int, int], Chunk] = {}
         self.chunk_lock = Lock()
         self.generator = generator
 
     def get_chunk(self, cx, cy):
+        """Return a loaded chunk by chunk coordinates if available."""
         with self.chunk_lock:
             return self.chunk_dict.get((cx, cy))
 
     def load_chunk(self, cx, cy):
+        """Load a chunk from disk or generate it if missing."""
         chunk = Chunk(cx, cy)
         loaded = chunk.load(self.world.name)
         if not loaded and self.generator is not None:
@@ -29,6 +32,7 @@ class ChunkManager:
         return chunk
 
     def unload_chunk(self, cx, cy):
+        """Persist and remove a chunk from memory."""
         with self.chunk_lock:
             if (cx, cy) in self.chunk_dict:
                 chunk = self.chunk_dict[(cx, cy)]
@@ -36,6 +40,7 @@ class ChunkManager:
                 del self.chunk_dict[(cx, cy)]
 
     def set_tile_at(self, x, y, tile_id):
+        """Set a tile at world-space coordinates, loading the chunk if needed."""
         cx = x // (CHUNK_SIZE * TILE_SIZE)
         cy = y // (CHUNK_SIZE * TILE_SIZE)
         chunk = self.get_chunk(cx, cy)
@@ -46,11 +51,13 @@ class ChunkManager:
         chunk.set_tile(local_x, local_y, tile_id)
 
     def on_exit(self):
+        """Persist all loaded chunks before shutdown."""
         with self.chunk_lock:
             for chunk in self.chunk_dict.values():
                 chunk.save(self.world.name)
             self.chunk_dict.clear()
 
     def all_chunks(self):
+        """Return a snapshot list of loaded chunk entries."""
         with self.chunk_lock:
             return list(self.chunk_dict.items())

@@ -1,6 +1,5 @@
 import numpy as np
 import pygame
-import logging
 from settings import CHUNK_SIZE, TILE_SIZE, DIR_ROOT
 from world.tilereg import TILEREG_TABLE
 
@@ -9,6 +8,7 @@ class Chunk:
     def __init__(
         self, cx: int, cy: int, size: int = CHUNK_SIZE, tile_size: int = TILE_SIZE
     ):
+        """Create a chunk container for tile data and rendering cache."""
         assert cx >= 0 and cy >= 0, "Chunk coordinates must be non-negative"
         self.cx = cx
         self.cy = cy
@@ -19,14 +19,13 @@ class Chunk:
         self.surface_cache = None  # cached surface for rendering
 
     def set_tile(self, x: int, y: int, tile_id: int):
+        """Set a local tile and mark the chunk dirty for rerender."""
         if 0 <= x < CHUNK_SIZE and 0 <= y < CHUNK_SIZE:
             self.tiles[y, x] = tile_id
             self.dirty = True
 
     def load(self, world_name: str = "new_world") -> bool:
-        """
-        load chunk data from disk, for example when it's near the player
-        """
+        """Load chunk data from disk; returns True if file exists."""
         path = f"{DIR_ROOT}/user/world_data/{world_name}/chunk_{self.cx}_{self.cy}.npy"
         try:
             self.tiles = np.load(path)
@@ -39,9 +38,7 @@ class Chunk:
             return False
 
     def save(self, world_name: str = "new_world"):
-        """
-        save chunk data to disk
-        """
+        """Persist chunk data to disk if it is dirty."""
         if self.dirty:
             path = (
                 f"{DIR_ROOT}/user/world_data/{world_name}/chunk_{self.cx}_{self.cy}.npy"
@@ -50,6 +47,7 @@ class Chunk:
             self.dirty = False
 
     def draw_tile(self, tile_id, surf: pygame.Surface, rect: pygame.Rect, debug: bool):
+        """Render a single tile into the given surface."""
         if tile_id == 0:
             return
         tile = TILEREG_TABLE[tile_id]
@@ -60,6 +58,7 @@ class Chunk:
             pygame.draw.rect(surf, color, rect)
 
     def surface(self, debug: bool = False) -> pygame.Surface:
+        """Return a cached surface for the chunk, rebuilding if dirty."""
         if not self.dirty and self.surface_cache is not None:
             return self.surface_cache
         size = CHUNK_SIZE * TILE_SIZE
@@ -89,6 +88,7 @@ class Chunk:
         return self.surface_cache
 
     def is_solid_at(self, x: int, y: int) -> bool:
+        """Return True if a local tile coordinate is solid."""
         if 0 <= x < CHUNK_SIZE and 0 <= y < CHUNK_SIZE:
             tile_id = self.tiles[y, x]
             tile = TILEREG_TABLE.get(tile_id)
@@ -97,8 +97,10 @@ class Chunk:
 
     @property
     def world_x(self):
+        """Chunk origin X in world tile coordinates."""
         return self.cx * CHUNK_SIZE
 
     @property
     def world_y(self):
+        """Chunk origin Y in world tile coordinates."""
         return self.cy * CHUNK_SIZE

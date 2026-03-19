@@ -16,6 +16,7 @@ class Player(Entity):
         width: int = TILE_SIZE,
         height: int = 2 * TILE_SIZE,
     ):
+        """Create a player entity with movement and health state."""
         super().__init__(x, y)
         self.world = world
         self.width = width
@@ -34,6 +35,7 @@ class Player(Entity):
         self.fall_damage_scale = 0.08
 
     def is_on_ground(self) -> bool:
+        """Return True if any hitbox touches solid ground below."""
         for hitbox in self.hitboxes:
             rect = hitbox.get_rect(self.pos[0], self.pos[1])
             ground_rect = pygame.Rect(rect.left, rect.bottom, rect.width, 1)
@@ -42,6 +44,7 @@ class Player(Entity):
         return False
 
     def solve_damage(self, landed_speed: float):
+        """Apply fall damage based on landing speed."""
         if landed_speed <= self.fall_damage_threshold:
             return
         damage = int(
@@ -51,6 +54,7 @@ class Player(Entity):
             self.on_hurt(damage)
 
     def on_hurt(self, damage: int):
+        """Apply damage and trigger death if health reaches zero."""
         if self.is_hurt:
             return
         self.health -= damage
@@ -61,6 +65,7 @@ class Player(Entity):
             self.on_dead()
 
     def update(self, input_frame: InputFrame, dt: float):
+        """Handle input, update movement intent, and integrate motion."""
         if pygame.K_a in input_frame.keys_held:
             self.vel[0] = -self.move_speed
         elif pygame.K_d in input_frame.keys_held:
@@ -85,10 +90,12 @@ class Player(Entity):
         super().update_pos(dt)
 
     def post_update(self, dt: float):
+        """Apply post-collision effects such as landing damage."""
         if self.did_land:
             self.solve_damage(self.landed_speed)
 
     def render(self, screen: pygame.Surface, camera):
+        """Render the player with a simple colored rectangle."""
         screen_x, screen_y = world_to_screen(
             self.pos[0], self.pos[1], camera.x, camera.y
         )
@@ -106,6 +113,7 @@ class Player(Entity):
             )
 
     def on_dead(self):
+        """Respawn the player at the world spawn point."""
         super().on_dead()
         self.pos[:] = [self.world.spawn_x, self.world.spawn_y]
         self.is_alive = True

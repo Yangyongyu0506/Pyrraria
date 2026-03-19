@@ -12,6 +12,7 @@ from ui.uimanager import UIManager
 
 class Game:
     def __init__(self):
+        """Initialize pygame, world state, and game subsystems."""
         logging.basicConfig(
             level=logging.WARNING, format="[%(asctime)s] %(levelname)s: %(message)s"
         )
@@ -33,6 +34,7 @@ class Game:
         self.ui_manager = UIManager(self.player)
 
     def run(self):
+        """Run the main game loop until shutdown."""
         while self.running:
             dt = self.clock.tick(FPS) / 1000
             self.process_input(dt)
@@ -43,11 +45,13 @@ class Game:
         pygame.quit()
 
     def process_input(self, dt):
+        """Handle window-level events such as quitting."""
         for event in pygame.event.get():
             if event.type == pygame.QUIT:
                 self.on_exit()
 
     def update(self, dt):
+        """Advance game state by one frame."""
         frame = self.input_manager.current_frame
         self.entity_manager.update(dt, frame)
         if 1 in frame.mouse_buttons_pressed:
@@ -66,12 +70,14 @@ class Game:
         self.ui_manager.update(dt)
 
     def render(self):
+        """Draw world, entities, and UI to the screen."""
         self.world.render(self.screen, self.camera)
         self.entity_manager.render(self.screen, self.camera)
         self.ui_manager.render(self.screen)
         pygame.display.flip()
 
     def on_exit(self):
+        """Cleanly shut down and persist world state."""
         self.logger.warning("Exiting game...")
         self.world.on_exit()
         self.entity_manager.on_exit()

@@ -1,3 +1,5 @@
+"""Tile registry mapping IDs to render and physics properties."""
+
 TILEREG_TABLE = {
     0: {"name": "air", "color": (0, 0, 0, 0), "solid": False, "hardness": 0},
     1: {"name": "dirt", "color": (100, 50, 0, 255), "solid": True, "hardness": 1},

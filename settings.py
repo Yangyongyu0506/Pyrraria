@@ -10,3 +10,8 @@ DIR_ROOT = str(Path(__file__).resolve().parent)
 
 MAX_ENTITIES = 200
 ACC_G = TILE_SIZE * 10.0  # gravity acceleration in pixels/s^2
+
+HEALTH_BAR_SIZE = (100, 10)
+HEALTH_BAR_POS = (10, 10)
+
+# Core world/physics configuration values used across modules.

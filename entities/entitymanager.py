@@ -5,11 +5,13 @@ from settings import MAX_ENTITIES
 
 class EntityManager:
     def __init__(self, world: World, max_entities: int = MAX_ENTITIES):
+        """Manage entity lifecycle, updates, and collisions."""
         self.world = world
         self.entities = []
         self.max_entities = max_entities
 
     def add_entity(self, entity: Entity):
+        """Add an entity if capacity allows."""
         if len(self.entities) < self.max_entities:
             self.entities.append(entity)
         else:
@@ -17,11 +19,13 @@ class EntityManager:
             pass
 
     def remove_entity(self, entity: Entity):
+        """Remove an entity and trigger its death hook."""
         if entity in self.entities:
             entity.on_dead()
             self.entities.remove(entity)
 
     def update(self, dt, input_frame=None):
+        """Update all entities, resolve collisions, and clean up dead ones."""
         for entity in self.entities:
             if input_frame is not None and hasattr(entity, "update"):
                 entity.update(input_frame, dt)
@@ -34,6 +38,7 @@ class EntityManager:
         self.entities = [entity for entity in self.entities if entity.is_alive]
 
     def solve_collisions(self, dt):
+        """Resolve entity collisions against solid world tiles."""
         for entity in self.entities:
             if entity.is_noclip:
                 continue
@@ -69,13 +74,16 @@ class EntityManager:
                 entity.vel[1] = 0.0
 
     def render(self, screen, camera):
+        """Render all entities to the screen."""
         for entity in self.entities:
             entity.render(screen, camera)
 
     def on_exit(self):
+        """Invoke entity shutdown logic and clear the list."""
         for entity in self.entities:
             entity.on_dead()
         self.entities.clear()
 
     def find_empty_spawn(self, width_px: int, height_px: int, max_tries: int = 300):
+        """Find a non-solid spawn location via the world helper."""
         return self.world.find_empty_spawn(width_px, height_px, max_tries)

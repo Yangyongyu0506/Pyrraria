@@ -8,6 +8,7 @@ from utils.maths import world_to_screen
 
 class Entity:
     def __init__(self, x: float, y: float):
+        """Base entity with physics state and rendering hook."""
         self.pos = np.array([x, y], dtype=float)
         self.prev_pos = np.array([x, y], dtype=float)
         self.vel = np.array([0.0, 0.0])
@@ -21,6 +22,7 @@ class Entity:
         self.landed_speed = 0.0
 
     def update_pos(self, dt):
+        """Integrate velocity and acceleration for one frame."""
         if self.is_alive:
             self.prev_pos = self.pos.copy()
             self.last_vel = self.vel.copy()
@@ -29,24 +31,30 @@ class Entity:
             self.pos += self.vel * dt
 
     def set_max_vel(self, max_vx, max_vy):
+        """Clamp velocity to a maximum magnitude on each axis."""
         self.max_vel[:] = [max_vx, max_vy]
 
     def set_pos(self, x, y):
+        """Set entity position in world coordinates."""
         self.pos[:] = [x, y]
 
     def set_vel(self, vx, vy):
+        """Set entity velocity in world units per second."""
         # Avoids creating a new array
         self.vel[:] = [vx, vy]
 
     def set_acc(self, ax, ay):
+        """Set acceleration applied each frame."""
         self.acc[:] = [ax, ay]
 
     def on_dead(self):
+        """Handle entity death. Subclasses can override."""
         # Placeholder for death logic, e.g. dropping items, playing animation, etc.
         self.is_alive = False
         pass
 
     def render(self, screen: pygame.Surface, camera: Camera):
+        """Render a placeholder entity shape."""
         # Placeholder: render as a red circle
         # Mind that camera's position is the left-top corner of the screen, while entity's position is in world coordinates
         screen_x, screen_y = world_to_screen(

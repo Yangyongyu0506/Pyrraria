@@ -18,6 +18,7 @@ from world.generator import Generator
 
 class World:
     def __init__(self, name: str = "new_world", logger: logging.Logger | None = None):
+        """Manage world state, chunk streaming, and rendering."""
         self.name = name
         self.generator = Generator(world_name=self.name)
         self.chunk_manager = ChunkManager(self, generator=self.generator)
@@ -32,6 +33,7 @@ class World:
         self.spawn_x, self.spawn_y = self.load_spawn_point()
 
     def load_background(self):
+        """Load the world background texture and reset cached scale."""
         self.background_img = pygame.image.load(
             f"{DIR_ROOT}/assets/backgrounds/day.png"
         ).convert_alpha()
@@ -39,22 +41,28 @@ class World:
         self.background_scaled_size = None
 
     def set_campos(self, x, y):
+        """Update the camera's world-space position for streaming."""
         self.camx = x
         self.camy = y
 
     def get_chunk(self, cx, cy):
+        """Return a loaded chunk at the given indices."""
         return self.chunk_manager.get_chunk(cx, cy)
 
     def load_chunk(self, cx, cy):
+        """Load or generate a chunk into memory."""
         return self.chunk_manager.load_chunk(cx, cy)
 
     def unload_chunk(self, cx, cy):
+        """Unload and persist a chunk from memory."""
         self.chunk_manager.unload_chunk(cx, cy)
 
     def update(self, player_pos):
+        """Update streaming center based on player position."""
         self.set_campos(*player_pos)
 
     def chunk_io(self):
+        """Background thread: load nearby chunks and unload distant ones."""
         while True:
             pcx = (self.camx // (CHUNK_SIZE * TILE_SIZE)) % WORLD_CHUNK_WIDTH
             pcy = self.camy // (CHUNK_SIZE * TILE_SIZE) % WORLD_CHUNK_HEIGHT
@@ -80,6 +88,7 @@ class World:
             time.sleep(0.5)
 
     def render(self, screen: pygame.Surface, camera: Camera):
+        """Draw the background and visible chunks."""
         screen_w, screen_h = screen.get_size()
         if self.background_scaled_size != (screen_w, screen_h):
             self.background_scaled = pygame.transform.scale(
@@ -119,11 +128,13 @@ class World:
                 screen.blit(surface, (screen_x, screen_y))
 
     def set_tile_at(self, world_x, world_y, tile_id):
+        """Set a tile at world coordinates with wraparound."""
         world_x = world_x % (WORLD_CHUNK_WIDTH * CHUNK_SIZE * TILE_SIZE)
         world_y = world_y % (WORLD_CHUNK_HEIGHT * CHUNK_SIZE * TILE_SIZE)
         self.chunk_manager.set_tile_at(world_x, world_y, tile_id)
 
     def is_solid_at(self, world_x, world_y):
+        """Check if a world-space tile is solid."""
         world_x = world_x % (WORLD_CHUNK_WIDTH * CHUNK_SIZE * TILE_SIZE)
         world_y = world_y % (WORLD_CHUNK_HEIGHT * CHUNK_SIZE * TILE_SIZE)
         cx = (world_x // (CHUNK_SIZE * TILE_SIZE)) % WORLD_CHUNK_WIDTH
@@ -136,9 +147,7 @@ class World:
         return False
 
     def is_rect_solid(self, rect: pygame.Rect) -> bool:
-        """
-        Check if a rectangle in world coordinates collides with any solid tile
-        """
+        """Check if a world-space rectangle overlaps any solid tile."""
         left = rect.left
         right = rect.right
         top = rect.top
@@ -158,6 +167,7 @@ class World:
         return False
 
     def on_exit(self):
+        """Persist loaded chunks on shutdown."""
         for pos, chunk in self.chunk_manager.all_chunks():
             chunk.save(self.name)
             self.logger.info(f"Unloading chunk {pos}")
@@ -166,6 +176,7 @@ class World:
     def find_empty_spawn(
         self, width_px: int, height_px: int, max_tries: int = 300
     ) -> tuple[int, int]:
+        """Search for a non-solid spawn position near world center."""
         world_w = WORLD_CHUNK_WIDTH * CHUNK_SIZE * TILE_SIZE
         world_h = WORLD_CHUNK_HEIGHT * CHUNK_SIZE * TILE_SIZE
         spawn_center_x = world_w // 2
@@ -184,6 +195,7 @@ class World:
         return spawn_center_x, spawn_center_y
 
     def load_spawn_point(self) -> tuple[int, int]:
+        """Load a persisted spawn point or fall back to a safe location."""
         path = f"{DIR_ROOT}/user/world_data/{self.name}/spawn_point.txt"
         try:
             with open(path, "r") as f:
