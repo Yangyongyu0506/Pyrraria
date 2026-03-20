@@ -17,6 +17,7 @@ class Chunk:
         self.tiles = np.zeros((size, size), dtype=np.uint8)
         self.dirty = False  # marks if the chunk needs to be re-rendered
         self.surface_cache = None  # cached surface for rendering
+        self.font = pygame.font.SysFont(None, 18)  # for debug text
 
     def set_tile(self, x: int, y: int, tile_id: int):
         """Set a local tile and mark the chunk dirty for rerender."""
@@ -80,9 +81,7 @@ class Chunk:
                     ),
                 )
         if debug:
-            font = pygame.font.SysFont(None, 18)
-            text = f"{self.cx},{self.cy}"
-            text_surface = font.render(text, True, (255, 255, 255))
+            text_surface = self.font.render(f"{self.cx},{self.cy}", True, (255, 255, 255))
             surf.blit(text_surface, (4, 4))
         self.surface_cache = surf
         return self.surface_cache

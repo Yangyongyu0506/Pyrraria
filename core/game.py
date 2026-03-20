@@ -60,12 +60,13 @@ class Game:
             self.world.set_tile_at(world_x, world_y, 0)
         if self.player is not None:
             screen_w, screen_h = self.screen.get_size()
-            self.camera.x, self.camera.y = center_camera_on(
+            target_x, target_y = center_camera_on(
                 self.player.pos[0] + self.player.width / 2,
                 self.player.pos[1] + self.player.height / 2,
                 screen_w,
                 screen_h,
             )
+            self.camera.update(target_x, target_y)
         self.world.update((self.camera.x, self.camera.y))
         self.ui_manager.update(dt)
 

@@ -1,6 +1,6 @@
 from entities.entity import Entity
 from world.world import World
-from settings import MAX_ENTITIES
+from settings import MAX_ENTITIES, TILE_SIZE
 
 
 class EntityManager:
@@ -57,7 +57,20 @@ class EntityManager:
                 for hitbox in entity.hitboxes
             ]
             if any(self.world.is_rect_solid(rect) for rect in rects_x):
-                entity.pos[0] = prev_x
+                step_dir = 1 if (next_x - prev_x) > 0 else -1
+                steps = 0
+                while (
+                    any(self.world.is_rect_solid(rect) for rect in rects_x)
+                    and steps < TILE_SIZE
+                ):
+                    entity.pos[0] -= step_dir
+                    rects_x = [
+                        hitbox.get_rect(entity.pos[0], entity.pos[1])
+                        for hitbox in entity.hitboxes
+                    ]
+                    steps += 1
+                if any(self.world.is_rect_solid(rect) for rect in rects_x):
+                    entity.pos[0] = prev_x
                 entity.vel[0] = 0.0
             # Y axis
             entity.pos[0] = entity.pos[0]
@@ -67,7 +80,20 @@ class EntityManager:
                 for hitbox in entity.hitboxes
             ]
             if any(self.world.is_rect_solid(rect) for rect in rects_y):
-                entity.pos[1] = prev_y
+                step_dir = 1 if (next_y - prev_y) > 0 else -1
+                steps = 0
+                while (
+                    any(self.world.is_rect_solid(rect) for rect in rects_y)
+                    and steps < TILE_SIZE
+                ):
+                    entity.pos[1] -= step_dir
+                    rects_y = [
+                        hitbox.get_rect(entity.pos[0], entity.pos[1])
+                        for hitbox in entity.hitboxes
+                    ]
+                    steps += 1
+                if any(self.world.is_rect_solid(rect) for rect in rects_y):
+                    entity.pos[1] = prev_y
                 if prev_vel_y > 0:
                     entity.did_land = True
                     entity.landed_speed = prev_vel_y

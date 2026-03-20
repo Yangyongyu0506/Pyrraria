@@ -17,3 +17,7 @@ def center_camera_on(
 ) -> tuple[int, int]:
     """Return a camera origin that centers the given target on screen."""
     return int(target_x - screen_w // 2), int(target_y - screen_h // 2)
+
+def lerp(a, b, t: float):
+    """Linearly interpolate between a and b by t (0.0 to 1.0)."""
+    return a + (b - a) * t
