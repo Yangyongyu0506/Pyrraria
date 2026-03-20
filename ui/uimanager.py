@@ -1,5 +1,5 @@
 from ui.ui_base import UIbase
-from ui.healthbar import HealthBar
+from ui.health import HealthBar
 from entities.player import Player
 import pygame
 

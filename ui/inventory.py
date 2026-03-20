@@ -20,7 +20,7 @@ class Inventory:
         self.hotbar_size = min(hotbar_size, slot_count)
         self.max_stack = max_stack
         self.selected_index = 0
-        self.save_path = os.path.join(DIR_ROOT, "player/inventory.json")
+        self.save_path = os.path.join(DIR_ROOT, "user/player/inventory.json")
         self.load_items(self.save_path)
 
     def select_slot(self, index: int):
