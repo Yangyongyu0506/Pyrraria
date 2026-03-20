@@ -1,9 +1,11 @@
 from entities.entity import Entity
 from entities.hitbox import Hitbox
+from ui.inventory import Inventory
 from core.input import InputFrame
 from world.world import World
-from utils.maths import world_to_screen, lerp
+from utils.maths import world_to_screen, lerp, screen_to_world
 from settings import TILE_SIZE
+from world.tilereg import TILE_DROPS
 import pygame
 import numpy as np
 
@@ -39,6 +41,9 @@ class Player(Entity):
         self.fall_damage_threshold = 180.0
         self.fall_damage_scale = 0.08
 
+        # inventory
+        self.inventory = Inventory()
+
         # fonts
         self.font = pygame.font.SysFont(None, 24)
         self.font_pos = (width // 2, height // 2)
@@ -52,11 +57,14 @@ class Player(Entity):
         """Move the font position towards the target for a simple animation."""
         self.font_pos = (
             int(lerp(self.font_pos[0], self.target_font_pos[0], 0.2)),
-            int(lerp(self.font_pos[1], self.target_font_pos[1], 0.2))
+            int(lerp(self.font_pos[1], self.target_font_pos[1], 0.2)),
         )
 
     def refresh_font(self):
-        self.target_font_pos = (self.width // 2 + np.random.randint(-30, 30), self.height // 2 + np.random.randint(-30, 30))
+        self.target_font_pos = (
+            self.width // 2 + np.random.randint(-30, 30),
+            self.height // 2 + np.random.randint(-30, 30),
+        )
 
     def is_on_ground(self) -> bool:
         """Return True if any hitbox touches solid ground below."""
@@ -122,6 +130,43 @@ class Player(Entity):
                 self.invincibility_tick = 0.0
                 self.reset_font()
 
+        if pygame.K_1 in input_frame.keys_pressed:
+            self.inventory.select_slot(0)
+        if pygame.K_2 in input_frame.keys_pressed:
+            self.inventory.select_slot(1)
+        if pygame.K_3 in input_frame.keys_pressed:
+            self.inventory.select_slot(2)
+        if pygame.K_4 in input_frame.keys_pressed:
+            self.inventory.select_slot(3)
+        if pygame.K_5 in input_frame.keys_pressed:
+            self.inventory.select_slot(4)
+        if pygame.K_6 in input_frame.keys_pressed:
+            self.inventory.select_slot(5)
+        if pygame.K_7 in input_frame.keys_pressed:
+            self.inventory.select_slot(6)
+        if pygame.K_8 in input_frame.keys_pressed:
+            self.inventory.select_slot(7)
+        if pygame.K_9 in input_frame.keys_pressed:
+            self.inventory.select_slot(8)
+
+        if 1 in input_frame.mouse_buttons_pressed:
+            mx, my = input_frame.mouse_pos
+            world_x, world_y = screen_to_world(mx, my, self.world.camx, self.world.camy)
+            tile_id = self.world.get_tile_at(world_x, world_y)
+            if tile_id is not None and tile_id != 0:
+                drop_id = TILE_DROPS.get(tile_id)
+                if drop_id is not None:
+                    self.inventory.add_item(drop_id, 1)
+                self.world.set_tile_at(world_x, world_y, 0)
+        if 3 in input_frame.mouse_buttons_pressed:
+            selected = self.inventory.get_selected()
+            if selected is not None and selected.count > 0:
+                mx, my = input_frame.mouse_pos
+                world_x, world_y = screen_to_world(mx, my, self.world.camx, self.world.camy)
+                if self.world.get_tile_at(world_x, world_y) == 0:
+                    self.world.set_tile_at(world_x, world_y, selected.item_id)
+                    self.inventory.remove_selected(1)
+
         super().update_pos(dt)
 
     def post_update(self, dt: float):
@@ -140,8 +185,13 @@ class Player(Entity):
                 (100, 0, 0, 10),
                 (int(screen_x), int(screen_y), self.width, self.height),
             )
-            font_surf = self.font.render(f"-{self.last_health - self.health}", True, (255, 0, 0)) 
-            screen.blit(font_surf, (int(screen_x + self.font_pos[0]), int(screen_y + self.font_pos[1])))
+            font_surf = self.font.render(
+                f"-{self.last_health - self.health}", True, (255, 0, 0)
+            )
+            screen.blit(
+                font_surf,
+                (int(screen_x + self.font_pos[0]), int(screen_y + self.font_pos[1])),
+            )
         else:
             pygame.draw.rect(
                 screen,
@@ -155,3 +205,7 @@ class Player(Entity):
         self.pos[:] = [self.world.spawn_x, self.world.spawn_y]
         self.is_alive = True
         self.health = 50
+
+    def on_exit(self):
+        """Persist player state such as inventory on game exit."""
+        self.inventory.on_exit()

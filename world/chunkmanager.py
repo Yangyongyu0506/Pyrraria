@@ -1,9 +1,6 @@
 from world.chunk import Chunk
 from threading import Lock
-from settings import (
-    CHUNK_SIZE,
-    TILE_SIZE,
-)
+from settings import CHUNK_PX, TILE_SIZE
 
 
 class ChunkManager:
@@ -41,13 +38,13 @@ class ChunkManager:
 
     def set_tile_at(self, x, y, tile_id):
         """Set a tile at world-space coordinates, loading the chunk if needed."""
-        cx = x // (CHUNK_SIZE * TILE_SIZE)
-        cy = y // (CHUNK_SIZE * TILE_SIZE)
+        cx = x // CHUNK_PX
+        cy = y // CHUNK_PX
         chunk = self.get_chunk(cx, cy)
         if not chunk:
             chunk = self.load_chunk(cx, cy)
-        local_x = x % (CHUNK_SIZE * TILE_SIZE) // TILE_SIZE
-        local_y = y % (CHUNK_SIZE * TILE_SIZE) // TILE_SIZE
+        local_x = x % CHUNK_PX // TILE_SIZE
+        local_y = y % CHUNK_PX // TILE_SIZE
         chunk.set_tile(local_x, local_y, tile_id)
 
     def on_exit(self):

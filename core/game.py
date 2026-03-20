@@ -8,6 +8,7 @@ from entities.player import Player
 from utils.maths import center_camera_on, screen_to_world
 from entities.entitymanager import EntityManager
 from ui.uimanager import UIManager
+from world.tilereg import TILE_DROPS
 
 
 class Game:
@@ -54,10 +55,6 @@ class Game:
         """Advance game state by one frame."""
         frame = self.input_manager.current_frame
         self.entity_manager.update(dt, frame)
-        if 1 in frame.mouse_buttons_pressed:
-            mx, my = frame.mouse_pos
-            world_x, world_y = screen_to_world(mx, my, self.camera.x, self.camera.y)
-            self.world.set_tile_at(world_x, world_y, 0)
         if self.player is not None:
             screen_w, screen_h = self.screen.get_size()
             target_x, target_y = center_camera_on(
@@ -81,5 +78,6 @@ class Game:
         """Cleanly shut down and persist world state."""
         self.logger.warning("Exiting game...")
         self.world.on_exit()
+        self.player.on_exit()
         self.entity_manager.on_exit()
         self.running = False

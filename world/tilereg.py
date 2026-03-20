@@ -13,3 +13,16 @@ TILEREG_TABLE = {
     9: {"name": "ice", "color": (170, 220, 255, 200), "solid": True, "hardness": 2},
     10: {"name": "gravel", "color": (120, 120, 120, 255), "solid": True, "hardness": 2},
 }
+
+TILE_DROPS = {
+    1: 1,  # dirt
+    2: 2,  # stone
+    3: 3,  # grass
+    4: 4,  # ore
+    5: 5,  # sand
+    6: 6,  # water
+    7: 7,  # clay
+    8: 8,  # snow
+    9: 9,  # ice
+    10: 10,  # gravel
+}

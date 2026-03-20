@@ -5,12 +5,14 @@ import logging
 from core.camera import Camera
 from utils.maths import world_to_screen
 from settings import (
-    CHUNK_SIZE,
+    CHUNK_PX,
     TILE_SIZE,
     WORLD_CHUNK_WIDTH,
     WORLD_CHUNK_HEIGHT,
     CHUNK_LOAD_RADIUS,
     DIR_ROOT,
+    WORLD_W_PX,
+    WORLD_H_PX,
 )
 from world.chunkmanager import ChunkManager
 from world.generator import Generator
@@ -24,8 +26,8 @@ class World:
         self.chunk_manager = ChunkManager(self, generator=self.generator)
         self.logger = logger or logging.getLogger("pyrraria.world")
         self.camx, self.camy = (
-            WORLD_CHUNK_WIDTH * CHUNK_SIZE * TILE_SIZE // 2,
-            WORLD_CHUNK_HEIGHT * CHUNK_SIZE * TILE_SIZE // 2,
+            WORLD_W_PX // 2,
+            WORLD_H_PX // 2,
         )
         self.load_background()
         self.chunk_io_thread = Thread(target=self.chunk_io, daemon=True)
@@ -64,8 +66,8 @@ class World:
     def chunk_io(self):
         """Background thread: load nearby chunks and unload distant ones."""
         while True:
-            pcx = (self.camx // (CHUNK_SIZE * TILE_SIZE)) % WORLD_CHUNK_WIDTH
-            pcy = self.camy // (CHUNK_SIZE * TILE_SIZE) % WORLD_CHUNK_HEIGHT
+            pcx = (self.camx // CHUNK_PX) % WORLD_CHUNK_WIDTH
+            pcy = self.camy // CHUNK_PX % WORLD_CHUNK_HEIGHT
             for cy in range(pcy - CHUNK_LOAD_RADIUS, pcy + CHUNK_LOAD_RADIUS + 1):
                 for cx in range(pcx - CHUNK_LOAD_RADIUS, pcx + CHUNK_LOAD_RADIUS + 1):
                     cx_wrap = cx % WORLD_CHUNK_WIDTH
@@ -101,10 +103,10 @@ class World:
         camy = int(camera.y)
         screen_w = screen.get_width()
         screen_h = screen.get_height()
-        start_cx = camx // (CHUNK_SIZE * TILE_SIZE)
-        start_cy = camy // (CHUNK_SIZE * TILE_SIZE)
-        end_cx = start_cx + screen_w // (CHUNK_SIZE * TILE_SIZE) + 2
-        end_cy = start_cy + screen_h // (CHUNK_SIZE * TILE_SIZE) + 2
+        start_cx = camx // CHUNK_PX
+        start_cy = camy // CHUNK_PX
+        end_cx = start_cx + screen_w // CHUNK_PX + 2
+        end_cy = start_cy + screen_h // CHUNK_PX + 2
         for cy in range(start_cy, end_cy):
             for cx in range(start_cx, end_cx):
                 # Ensure coordinates wrap around world boundaries
@@ -122,27 +124,40 @@ class World:
                         f"Chunk ({cx_wrap}, {cy_wrap}) has no surface."
                     )  # Debugging
                     continue
-                world_x = cx * CHUNK_SIZE * TILE_SIZE  # use cx instead of cx_wrap
-                world_y = cy * CHUNK_SIZE * TILE_SIZE
+                world_x = cx * CHUNK_PX  # use cx instead of cx_wrap
+                world_y = cy * CHUNK_PX
                 screen_x, screen_y = world_to_screen(world_x, world_y, camx, camy)
                 screen.blit(surface, (screen_x, screen_y))
 
     def set_tile_at(self, world_x, world_y, tile_id):
         """Set a tile at world coordinates with wraparound."""
-        world_x = world_x % (WORLD_CHUNK_WIDTH * CHUNK_SIZE * TILE_SIZE)
-        world_y = world_y % (WORLD_CHUNK_HEIGHT * CHUNK_SIZE * TILE_SIZE)
+        world_x = world_x % WORLD_W_PX
+        world_y = world_y % WORLD_H_PX
         self.chunk_manager.set_tile_at(world_x, world_y, tile_id)
+
+    def get_tile_at(self, world_x, world_y):
+        """Return the tile id at world coordinates, or None if unloaded."""
+        world_x = world_x % WORLD_W_PX
+        world_y = world_y % WORLD_H_PX
+        cx = (world_x // CHUNK_PX) % WORLD_CHUNK_WIDTH
+        cy = (world_y // CHUNK_PX) % WORLD_CHUNK_HEIGHT
+        chunk = self.get_chunk(cx, cy)
+        if not chunk:
+            return None
+        local_x = (world_x % CHUNK_PX) // TILE_SIZE
+        local_y = (world_y % CHUNK_PX) // TILE_SIZE
+        return int(chunk.tiles[local_y, local_x])
 
     def is_solid_at(self, world_x, world_y):
         """Check if a world-space tile is solid."""
-        world_x = world_x % (WORLD_CHUNK_WIDTH * CHUNK_SIZE * TILE_SIZE)
-        world_y = world_y % (WORLD_CHUNK_HEIGHT * CHUNK_SIZE * TILE_SIZE)
-        cx = (world_x // (CHUNK_SIZE * TILE_SIZE)) % WORLD_CHUNK_WIDTH
-        cy = (world_y // (CHUNK_SIZE * TILE_SIZE)) % WORLD_CHUNK_HEIGHT
+        world_x = world_x % WORLD_W_PX
+        world_y = world_y % WORLD_H_PX
+        cx = (world_x // CHUNK_PX) % WORLD_CHUNK_WIDTH
+        cy = (world_y // CHUNK_PX) % WORLD_CHUNK_HEIGHT
         chunk = self.get_chunk(cx, cy)
         if chunk:
-            local_x = (world_x % (CHUNK_SIZE * TILE_SIZE)) // TILE_SIZE
-            local_y = (world_y % (CHUNK_SIZE * TILE_SIZE)) // TILE_SIZE
+            local_x = (world_x % CHUNK_PX) // TILE_SIZE
+            local_y = (world_y % CHUNK_PX) // TILE_SIZE
             return chunk.is_solid_at(local_x, local_y)
         return False
 
@@ -177,8 +192,8 @@ class World:
         self, width_px: int, height_px: int, max_tries: int = 300
     ) -> tuple[int, int]:
         """Search for a non-solid spawn position near world center."""
-        world_w = WORLD_CHUNK_WIDTH * CHUNK_SIZE * TILE_SIZE
-        world_h = WORLD_CHUNK_HEIGHT * CHUNK_SIZE * TILE_SIZE
+        world_w = WORLD_W_PX
+        world_h = WORLD_H_PX
         spawn_center_x = world_w // 2
         spawn_center_y = world_h // 2
         step = TILE_SIZE

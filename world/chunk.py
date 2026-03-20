@@ -1,6 +1,6 @@
 import numpy as np
 import pygame
-from settings import CHUNK_SIZE, TILE_SIZE, DIR_ROOT
+from settings import CHUNK_SIZE, TILE_SIZE, DIR_ROOT, CHUNK_PX
 from world.tilereg import TILEREG_TABLE
 
 
@@ -62,8 +62,7 @@ class Chunk:
         """Return a cached surface for the chunk, rebuilding if dirty."""
         if not self.dirty and self.surface_cache is not None:
             return self.surface_cache
-        size = CHUNK_SIZE * TILE_SIZE
-        surf = pygame.Surface((size, size), pygame.SRCALPHA).convert_alpha()
+        surf = pygame.Surface((CHUNK_PX, CHUNK_PX), pygame.SRCALPHA).convert_alpha()
         surf.fill((0, 0, 0, 0))  # transparent
         for y in range(CHUNK_SIZE):
             for x in range(CHUNK_SIZE):
@@ -81,7 +80,9 @@ class Chunk:
                     ),
                 )
         if debug:
-            text_surface = self.font.render(f"{self.cx},{self.cy}", True, (255, 255, 255))
+            text_surface = self.font.render(
+                f"{self.cx},{self.cy}", True, (255, 255, 255)
+            )
             surf.blit(text_surface, (4, 4))
         self.surface_cache = surf
         return self.surface_cache

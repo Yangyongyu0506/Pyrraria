@@ -8,6 +8,10 @@ WORLD_CHUNK_WIDTH = 64
 WORLD_CHUNK_HEIGHT = 32
 DIR_ROOT = str(Path(__file__).resolve().parent)
 
+CHUNK_PX = CHUNK_SIZE * TILE_SIZE
+WORLD_W_PX = WORLD_CHUNK_WIDTH * CHUNK_PX
+WORLD_H_PX = WORLD_CHUNK_HEIGHT * CHUNK_PX
+
 MAX_ENTITIES = 200
 ACC_G = TILE_SIZE * 10.0  # gravity acceleration in pixels/s^2
 

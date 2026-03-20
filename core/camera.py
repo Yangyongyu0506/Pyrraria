@@ -1,25 +1,20 @@
-from settings import (
-    CHUNK_SIZE,
-    TILE_SIZE,
-    WORLD_CHUNK_WIDTH,
-    WORLD_CHUNK_HEIGHT,
-)
+from settings import CHUNK_PX, WORLD_W_PX, WORLD_H_PX
 from utils.maths import world_to_screen, screen_to_world, lerp
 
 
 class Camera:
     def __init__(self):
         """Initialize the camera at the center of the world."""
-        self.x = CHUNK_SIZE * TILE_SIZE * WORLD_CHUNK_WIDTH // 2
-        self.y = CHUNK_SIZE * TILE_SIZE * WORLD_CHUNK_HEIGHT // 2
+        self.x = WORLD_W_PX // 2
+        self.y = WORLD_H_PX // 2
         self.lerp = 0.15
 
     def update(self, x, y):
         """Set the camera position with wraparound world bounds."""
         self.x = lerp(self.x, x, self.lerp)
         self.y = lerp(self.y, y, self.lerp)
-        self.x = int(self.x) % (CHUNK_SIZE * TILE_SIZE * WORLD_CHUNK_WIDTH)
-        self.y = int(self.y) % (CHUNK_SIZE * TILE_SIZE * WORLD_CHUNK_HEIGHT)
+        self.x = int(self.x) % WORLD_W_PX
+        self.y = int(self.y) % WORLD_H_PX
 
     def world_to_screen(self, wx, wy):
         """Project a world-space point into screen-space."""

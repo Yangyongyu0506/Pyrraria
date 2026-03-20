@@ -57,20 +57,25 @@ class EntityManager:
                 for hitbox in entity.hitboxes
             ]
             if any(self.world.is_rect_solid(rect) for rect in rects_x):
-                step_dir = 1 if (next_x - prev_x) > 0 else -1
-                steps = 0
-                while (
-                    any(self.world.is_rect_solid(rect) for rect in rects_x)
-                    and steps < TILE_SIZE
-                ):
-                    entity.pos[0] -= step_dir
-                    rects_x = [
-                        hitbox.get_rect(entity.pos[0], entity.pos[1])
-                        for hitbox in entity.hitboxes
-                    ]
-                    steps += 1
-                if any(self.world.is_rect_solid(rect) for rect in rects_x):
-                    entity.pos[0] = prev_x
+                delta_x = next_x - prev_x
+                if delta_x > 0:
+                    resolved_x = next_x
+                    for hitbox in entity.hitboxes:
+                        rect = hitbox.get_rect(next_x, prev_y)
+                        tile_x = (rect.right - 1) // TILE_SIZE
+                        resolved_x = min(
+                            resolved_x, tile_x * TILE_SIZE - hitbox.x - hitbox.width
+                        )
+                    entity.pos[0] = resolved_x
+                else:
+                    resolved_x = next_x
+                    for hitbox in entity.hitboxes:
+                        rect = hitbox.get_rect(next_x, prev_y)
+                        tile_x = rect.left // TILE_SIZE
+                        resolved_x = max(
+                            resolved_x, (tile_x + 1) * TILE_SIZE - hitbox.x
+                        )
+                    entity.pos[0] = resolved_x
                 entity.vel[0] = 0.0
             # Y axis
             entity.pos[0] = entity.pos[0]
@@ -80,23 +85,27 @@ class EntityManager:
                 for hitbox in entity.hitboxes
             ]
             if any(self.world.is_rect_solid(rect) for rect in rects_y):
-                step_dir = 1 if (next_y - prev_y) > 0 else -1
-                steps = 0
-                while (
-                    any(self.world.is_rect_solid(rect) for rect in rects_y)
-                    and steps < TILE_SIZE
-                ):
-                    entity.pos[1] -= step_dir
-                    rects_y = [
-                        hitbox.get_rect(entity.pos[0], entity.pos[1])
-                        for hitbox in entity.hitboxes
-                    ]
-                    steps += 1
-                if any(self.world.is_rect_solid(rect) for rect in rects_y):
-                    entity.pos[1] = prev_y
-                if prev_vel_y > 0:
+                delta_y = next_y - prev_y
+                if delta_y > 0:
+                    resolved_y = next_y
+                    for hitbox in entity.hitboxes:
+                        rect = hitbox.get_rect(entity.pos[0], next_y)
+                        tile_y = (rect.bottom - 1) // TILE_SIZE
+                        resolved_y = min(
+                            resolved_y, tile_y * TILE_SIZE - hitbox.y - hitbox.height
+                        )
+                    entity.pos[1] = resolved_y
                     entity.did_land = True
                     entity.landed_speed = prev_vel_y
+                else:
+                    resolved_y = next_y
+                    for hitbox in entity.hitboxes:
+                        rect = hitbox.get_rect(entity.pos[0], next_y)
+                        tile_y = rect.top // TILE_SIZE
+                        resolved_y = max(
+                            resolved_y, (tile_y + 1) * TILE_SIZE - hitbox.y
+                        )
+                    entity.pos[1] = resolved_y
                 entity.vel[1] = 0.0
 
     def render(self, screen, camera):
