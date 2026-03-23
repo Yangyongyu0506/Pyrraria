@@ -143,6 +143,11 @@ class Inventory:
                 )
                 text = self.font.render(str(stack.count), True, (220, 220, 220))
                 surface.blit(text, (x + 4, y + 8))
+                if i == self.selected_index:
+                    text = self.font.render(
+                        ITEMREG_TABLE[stack.item_id]["name"], True, (255, 255, 255)
+                    )
+                    surface.blit(text, (x, y - 20))
 
     def on_exit(self):
         """Save inventory items to json files."""
