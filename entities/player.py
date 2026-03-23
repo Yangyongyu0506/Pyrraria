@@ -1,6 +1,7 @@
 from entities.entity import Entity
 from entities.hitbox import Hitbox
 from entities.item_drop import ItemDrop
+from ui.backpack import Backpack
 from ui.inventory import Inventory
 from core.input import InputFrame
 from world.world import World
@@ -48,6 +49,7 @@ class Player(Entity):
 
         # inventory
         self.inventory = Inventory()
+        self.backpack = Backpack()
 
         # fonts
         self.font = pygame.font.SysFont(None, 24)
@@ -105,6 +107,38 @@ class Player(Entity):
 
     def update(self, input_frame: InputFrame, dt: float):
         """Handle input, update movement intent, and integrate motion."""
+        if pygame.K_e in input_frame.keys_pressed:
+            self.backpack.toggle()
+
+        if self.backpack.is_open:
+            if pygame.K_h in input_frame.keys_pressed:
+                self.backpack.move_cursor(-1, 0)
+            if pygame.K_l in input_frame.keys_pressed:
+                self.backpack.move_cursor(1, 0)
+            if pygame.K_k in input_frame.keys_pressed:
+                self.backpack.move_cursor(0, -1)
+            if pygame.K_j in input_frame.keys_pressed:
+                self.backpack.move_cursor(0, 1)
+
+            if pygame.K_1 in input_frame.keys_pressed:
+                self.backpack.swap_with_inventory(self.inventory, 0)
+            if pygame.K_2 in input_frame.keys_pressed:
+                self.backpack.swap_with_inventory(self.inventory, 1)
+            if pygame.K_3 in input_frame.keys_pressed:
+                self.backpack.swap_with_inventory(self.inventory, 2)
+            if pygame.K_4 in input_frame.keys_pressed:
+                self.backpack.swap_with_inventory(self.inventory, 3)
+            if pygame.K_5 in input_frame.keys_pressed:
+                self.backpack.swap_with_inventory(self.inventory, 4)
+            if pygame.K_6 in input_frame.keys_pressed:
+                self.backpack.swap_with_inventory(self.inventory, 5)
+            if pygame.K_7 in input_frame.keys_pressed:
+                self.backpack.swap_with_inventory(self.inventory, 6)
+            if pygame.K_8 in input_frame.keys_pressed:
+                self.backpack.swap_with_inventory(self.inventory, 7)
+            if pygame.K_9 in input_frame.keys_pressed:
+                self.backpack.swap_with_inventory(self.inventory, 8)
+
         moving_left = pygame.K_a in input_frame.keys_held
         moving_right = pygame.K_d in input_frame.keys_held
         on_ground = self.is_on_ground()
@@ -135,29 +169,33 @@ class Player(Entity):
                 self.invincibility_tick = 0.0
                 self.reset_font()
 
-        if pygame.K_1 in input_frame.keys_pressed:
-            self.inventory.select_slot(0)
-        if pygame.K_2 in input_frame.keys_pressed:
-            self.inventory.select_slot(1)
-        if pygame.K_3 in input_frame.keys_pressed:
-            self.inventory.select_slot(2)
-        if pygame.K_4 in input_frame.keys_pressed:
-            self.inventory.select_slot(3)
-        if pygame.K_5 in input_frame.keys_pressed:
-            self.inventory.select_slot(4)
-        if pygame.K_6 in input_frame.keys_pressed:
-            self.inventory.select_slot(5)
-        if pygame.K_7 in input_frame.keys_pressed:
-            self.inventory.select_slot(6)
-        if pygame.K_8 in input_frame.keys_pressed:
-            self.inventory.select_slot(7)
-        if pygame.K_9 in input_frame.keys_pressed:
-            self.inventory.select_slot(8)
+        if not self.backpack.is_open:
+            if pygame.K_1 in input_frame.keys_pressed:
+                self.inventory.select_slot(0)
+            if pygame.K_2 in input_frame.keys_pressed:
+                self.inventory.select_slot(1)
+            if pygame.K_3 in input_frame.keys_pressed:
+                self.inventory.select_slot(2)
+            if pygame.K_4 in input_frame.keys_pressed:
+                self.inventory.select_slot(3)
+            if pygame.K_5 in input_frame.keys_pressed:
+                self.inventory.select_slot(4)
+            if pygame.K_6 in input_frame.keys_pressed:
+                self.inventory.select_slot(5)
+            if pygame.K_7 in input_frame.keys_pressed:
+                self.inventory.select_slot(6)
+            if pygame.K_8 in input_frame.keys_pressed:
+                self.inventory.select_slot(7)
+            if pygame.K_9 in input_frame.keys_pressed:
+                self.inventory.select_slot(8)
 
         if 1 in input_frame.mouse_buttons_pressed:
             mx, my = input_frame.mouse_pos
             world_x, world_y = screen_to_world(mx, my, self.world.camx, self.world.camy)
-            if math.hypot(world_x - self.pos[0], world_y - self.pos[1]) <= PICKUP_RADIUS:
+            if (
+                math.hypot(world_x - self.pos[0], world_y - self.pos[1])
+                <= PICKUP_RADIUS
+            ):
                 tile_id = self.world.get_tile_at(world_x, world_y)
                 if tile_id is not None and tile_id != 0:
                     drop_id = TILE_DROPS.get(tile_id)
@@ -181,7 +219,10 @@ class Player(Entity):
                 world_x, world_y = screen_to_world(
                     mx, my, self.world.camx, self.world.camy
                 )
-                if math.hypot(world_x - self.pos[0], world_y - self.pos[1]) <= PICKUP_RADIUS:
+                if (
+                    math.hypot(world_x - self.pos[0], world_y - self.pos[1])
+                    <= PICKUP_RADIUS
+                ):
                     if self.world.get_tile_at(world_x, world_y) == 0:
                         self.world.set_tile_at(world_x, world_y, selected.item_id)
                         self.inventory.remove_selected(1)
@@ -228,3 +269,4 @@ class Player(Entity):
     def on_exit(self):
         """Persist player state such as inventory on game exit."""
         self.inventory.on_exit()
+        self.backpack.on_exit()

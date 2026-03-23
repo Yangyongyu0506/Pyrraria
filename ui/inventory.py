@@ -19,13 +19,22 @@ class ItemStack:
 class Inventory:
     """Simple fixed-size inventory with a selectable hotbar."""
 
-    def __init__(self, slot_count: int = 20, hotbar_size: int = 9, max_stack: int = 99):
+    def __init__(
+        self,
+        slot_count: int = 20,
+        hotbar_size: int = 9,
+        max_stack: int = 99,
+        save_path: str | None = None,
+    ):
         self.slots: list[ItemStack | None] = [None] * slot_count
         self.hotbar_size = min(hotbar_size, slot_count)
         self.max_stack = max_stack
         self.selected_index = 0
-        self.save_path = os.path.join(DIR_ROOT, "user/player/inventory.json")
+        self.save_path = save_path or os.path.join(
+            DIR_ROOT, "user/player/inventory.json"
+        )
         self.load_items(self.save_path)
+        self.font = pygame.font.SysFont(None, 20)
 
     def select_slot(self, index: int):
         """Select a hotbar slot by index."""
@@ -69,9 +78,13 @@ class Inventory:
         if stack.count == 0:
             self.slots[self.selected_index] = None
         return True
-    
+
     def load_items(self, path: str | None = None):
         """Load inventory items from a json file."""
+        path = path or self.save_path
+        if path is None:
+            return
+        assert path is not None
         if os.path.exists(path):
             with open(path, "r") as f:
                 data = json.load(f)
@@ -83,6 +96,10 @@ class Inventory:
 
     def write_items(self, path: str | None = None):
         """Write inventory items to a json file."""
+        path = path or self.save_path
+        if path is None:
+            return
+        assert path is not None
         data = []
         for slot in self.slots:
             if slot is not None:
@@ -102,15 +119,12 @@ class Inventory:
         total_width = total_slots * slot_size + (total_slots - 1) * padding
         start_x = (surface.get_width() - total_width) // 2
         y = surface.get_height() - slot_size - 12
-        font = pygame.font.SysFont(None, 20)
         for i in range(total_slots):
             x = start_x + i * (slot_size + padding)
             rect = pygame.Rect(x, y, slot_size, slot_size)
             pygame.draw.rect(surface, (30, 30, 30), rect)
             border_color = (
-                (255, 255, 255)
-                if i == self.selected_index
-                else (120, 120, 120)
+                (255, 255, 255) if i == self.selected_index else (120, 120, 120)
             )
             pygame.draw.rect(surface, border_color, rect, 2)
             stack = self.slots[i]
@@ -120,9 +134,8 @@ class Inventory:
                     ITEMREG_TABLE[stack.item_id]["color"],
                     rect.inflate(-4, -4),
                 )
-                text = font.render(str(stack.count), True, (220, 220, 220))
+                text = self.font.render(str(stack.count), True, (220, 220, 220))
                 surface.blit(text, (x + 4, y + 8))
-
 
     def on_exit(self):
         """Save inventory items to json files."""

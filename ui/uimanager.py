@@ -17,3 +17,4 @@ class UIManager:
         """Render UI widgets to the screen."""
         self.health_bar.render(surface)
         self.player.inventory.render(surface)
+        self.player.backpack.render(surface)
