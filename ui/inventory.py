@@ -1,7 +1,11 @@
 from dataclasses import dataclass
+
+import pygame
 from settings import DIR_ROOT
 import json
 import os
+
+from world.itemreg import ITEMREG_TABLE
 
 
 @dataclass
@@ -89,6 +93,36 @@ class Inventory:
             os.makedirs(os.path.dirname(path))
         with open(path, "w") as f:
             json.dump(data, f)
+
+    def render(self, surface: pygame.Surface):
+        """Draw a minimal hotbar for the player inventory."""
+        slot_size = 32
+        padding = 6
+        total_slots = self.hotbar_size
+        total_width = total_slots * slot_size + (total_slots - 1) * padding
+        start_x = (surface.get_width() - total_width) // 2
+        y = surface.get_height() - slot_size - 12
+        font = pygame.font.SysFont(None, 20)
+        for i in range(total_slots):
+            x = start_x + i * (slot_size + padding)
+            rect = pygame.Rect(x, y, slot_size, slot_size)
+            pygame.draw.rect(surface, (30, 30, 30), rect)
+            border_color = (
+                (255, 255, 255)
+                if i == self.selected_index
+                else (120, 120, 120)
+            )
+            pygame.draw.rect(surface, border_color, rect, 2)
+            stack = self.slots[i]
+            if stack is not None:
+                pygame.draw.rect(
+                    surface,
+                    ITEMREG_TABLE[stack.item_id]["color"],
+                    rect.inflate(-4, -4),
+                )
+                text = font.render(str(stack.count), True, (220, 220, 220))
+                surface.blit(text, (x + 4, y + 8))
+
 
     def on_exit(self):
         """Save inventory items to json files."""
