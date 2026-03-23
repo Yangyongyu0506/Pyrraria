@@ -5,7 +5,7 @@ It summarizes how to build/run, how to lint/test, and the code style
 conventions used across the project.
 
 If you are unsure, follow existing patterns in the files under
-`core/`, `world/`, `entities/`, `ui/`, and `utils/`.
+`core/`, `world/`, `entities/`, `systems/`, `ui/`, and `utils/`.
 
 Cursor rules: none found in `.cursor/rules/` or `.cursorrules`.
 Copilot rules: none found in `.github/copilot-instructions.md`.
@@ -51,6 +51,7 @@ Project Structure
 - `core/`: game loop, camera, input.
 - `world/`: chunk streaming, terrain generation, tile registry.
 - `entities/`: entities, collision, player logic.
+- `systems/`: input, digging, placement, pickup, physics, discard.
 - `ui/`: health bar, inventory HUD.
 - `utils/`: small math helpers.
 - `settings.py`: shared constants.
@@ -111,6 +112,11 @@ Data and Persistence
 - Backpack saves to `user/player/backpack.json`.
 - Prefer existing save/load helpers in `Chunk` and `Inventory`.
 
+Systems
+- Use systems to own game logic (digging, pickup, placement, input).
+- Keep `Player` focused on state; avoid embedding new game rules there.
+- Route tool checks and tile breaking through `DigSystem`.
+
 Concurrency
 - Chunk streaming uses a background thread (`World.chunk_io`).
 - Protect shared state using locks (see `ChunkManager.chunk_lock`).
@@ -135,6 +141,11 @@ Tiles
 - Tile metadata is in `world/tilereg.py`.
 - Use tile IDs consistently (0 is air).
 - When adding tiles, update `TILEREG_TABLE` and `TILE_DROPS`.
+
+Items and Tools
+- Item registry lives in `entities/itemreg.py`.
+- Tools are defined in `world/tools.py` and are unstackable.
+- Digging requires a tool with `can_dig`.
 
 UI
 - UI classes live in `ui/` and are lightweight.

@@ -5,10 +5,15 @@ from world.world import World
 from core.camera import Camera
 from core.input import InputManager
 from entities.player import Player
-from utils.maths import center_camera_on, screen_to_world
+from utils.maths import center_camera_on
 from entities.entitymanager import EntityManager
 from ui.uimanager import UIManager
-from world.tilereg import TILE_DROPS
+from systems.dig_system import DigSystem
+from systems.pickup_system import PickupSystem
+from systems.placement_system import PlacementSystem
+from systems.discard_system import DiscardSystem
+from systems.input_system import InputSystem
+from systems.physics_system import PhysicsSystem
 
 
 class Game:
@@ -29,10 +34,21 @@ class Game:
 
         self.input_manager = InputManager()
         self.entity_manager = EntityManager(self.world)
+        self.dig_system = DigSystem(self.world, self.entity_manager)
+        self.pickup_system = PickupSystem(self.entity_manager)
+        self.placement_system = PlacementSystem(self.world)
+        self.discard_system = DiscardSystem(self.entity_manager)
+        self.input_system = InputSystem(
+            self.dig_system,
+            self.pickup_system,
+            self.placement_system,
+            self.discard_system,
+        )
+        self.physics_system = PhysicsSystem()
         spawn_x, spawn_y = self.world.spawn_x, self.world.spawn_y
         self.player = Player(spawn_x, spawn_y, self.world, self.entity_manager)
         self.entity_manager.add_entity(self.player)
-        self.ui_manager = UIManager(self.player)
+        self.ui_manager = UIManager(self.player, self.dig_system)
 
     def run(self):
         """Run the main game loop until shutdown."""
@@ -53,7 +69,9 @@ class Game:
     def update(self, dt):
         """Advance game state by one frame."""
         frame = self.input_manager.current_frame
+        self.input_system.update(self.player, frame, dt)
         self.entity_manager.update(dt, frame)
+        self.physics_system.update(self.player, dt)
         if self.player is not None:
             screen_w, screen_h = self.screen.get_size()
             target_x, target_y = center_camera_on(

@@ -9,6 +9,8 @@ Pyrraria is a Python parody of the renowned 2D sandbox game Terraria. It is a py
 - Player entity with gravity, jump, collision, and fall damage
 - Tile drops spawn as entities and are collected on proximity
 - Backpack storage with keyboard navigation and swaps
+- Tool-gated digging with hardness-based break time
+- Modular systems (input, digging, placement, pickup)
 
 ## Requirements
 - Python 3.12+
@@ -35,10 +37,11 @@ python main.py
 ## Controls
 - `A`, `D`: move the player
 - `W` or `Space`: jump
-- Left mouse button: set the clicked tile to air (remove)
+- Left mouse button: dig tiles (requires a tool)
 - `E`: toggle backpack
 - `H`, `J`, `K`, `L`: move backpack cursor
 - `1`-`9`: swap backpack cursor slot with hotbar slot (when open)
+- `Q`: discard backpack slot to the world (when open)
 - Window close: quit and save chunks
 
 ## Project structure
@@ -46,8 +49,17 @@ python main.py
 - `core/`: game loop, camera, input
 - `world/`: chunks, world management, terrain generation
 - `entities/`: entity base classes and hitboxes
+- `systems/`: input, digging, placement, pickup, physics, discard
 - `assets/`: background and art assets
 - `user/world_data/`: generated and saved chunk data
+
+## Systems Overview
+- `InputSystem`: maps keyboard/mouse inputs to player intent
+- `DigSystem`: tool-gated digging with hardness-based timing
+- `PlacementSystem`: right-click placement with range checks
+- `PickupSystem`: attracts and collects nearby item drops
+- `DiscardSystem`: drops backpack items into the world
+- `PhysicsSystem`: applies physics constraints like max fall speed
 
 ## Notes
 - Terrain generation lives in `world/generator.py`, but the runtime world loads chunk files on demand. If a chunk file does not exist yet, it starts empty.
@@ -56,6 +68,7 @@ python main.py
 - Player fall damage triggers on hard landings.
 - World size and tuning constants are in `settings.py`.
 - Backpack saves to `user/player/backpack.json` on exit.
+- Tools are unstackable and defined in `world/tools.py`.
 
 ## Roadmap ideas
 - Hook up procedural generation for missing chunks

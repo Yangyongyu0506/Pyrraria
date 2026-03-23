@@ -1,13 +1,12 @@
 import os
 
+import numpy as np
 import pygame
 
 from entities.item_drop import ItemDrop
+from entities.itemreg import ITEMREG_TABLE
 from settings import DIR_ROOT
 from ui.inventory import Inventory, ItemStack
-from entities.itemreg import ITEMREG_TABLE
-# from entities.entitymanager import EntityManager
-import numpy as np
 
 
 class Backpack(Inventory):
@@ -55,7 +54,10 @@ class Backpack(Inventory):
             if entity_manager is not None:
                 entity_manager.add_entity(
                     ItemDrop(
-                        player_pos[0] + np.random.uniform(-48, 48), player_pos[1] + np.random.uniform(-48, 48), stack.item_id, stack.count
+                        player_pos[0] + np.random.uniform(-48, 48),
+                        player_pos[1] + np.random.uniform(-48, 48),
+                        stack.item_id,
+                        stack.count,
                     )
                 )
             self.slots[self.cursor_index] = None

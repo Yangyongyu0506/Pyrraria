@@ -1,8 +1,6 @@
 from entities.entity import Entity
-from entities.item_drop import ItemDrop
-from entities.player import Player
 from world.world import World
-from settings import MAX_ENTITIES, PICKUP_COLLECT_RADIUS, PICKUP_RADIUS, TILE_SIZE
+from settings import MAX_ENTITIES, TILE_SIZE
 
 
 class EntityManager:
@@ -34,41 +32,10 @@ class EntityManager:
             else:
                 entity.update_pos(dt)
         self.solve_collisions(dt)
-        self.collect_item_drops()
         for entity in self.entities:
             if hasattr(entity, "post_update"):
                 entity.post_update(dt)
         self.entities = [entity for entity in self.entities if entity.is_alive]
-
-    def collect_item_drops(self, pickup_radius: float = PICKUP_RADIUS, collect_radius: float = PICKUP_COLLECT_RADIUS):
-        """Collect nearby item drops into the player's inventory."""
-        player = next(
-            (entity for entity in self.entities if isinstance(entity, Player)), None
-        )
-        if player is None:
-            return
-        attract_sq = pickup_radius * pickup_radius
-        collect_sq = collect_radius * collect_radius
-        for entity in self.entities:
-            if not isinstance(entity, ItemDrop):
-                continue
-            dx = (entity.pos[0] + entity.width / 2) - (player.pos[0] + player.width / 2)
-            dy = (entity.pos[1] + entity.height / 2) - (
-                player.pos[1] + player.height / 2
-            )
-            dist_sq = dx * dx + dy * dy
-            if collect_sq < dist_sq <= attract_sq:
-                target_x = player.pos[0] + player.width / 2 - entity.width / 2
-                target_y = player.pos[1] + player.height / 2 - entity.height / 2
-                entity.start_pickup(target_x, target_y)
-            elif dist_sq > attract_sq:
-                continue
-            elif dist_sq <= collect_sq:
-                remaining = player.inventory.add_item(entity.item_id, entity.count)
-                if remaining == 0:
-                    entity.is_alive = False
-                else:
-                    entity.count = remaining
 
     def solve_collisions(self, dt):
         """Resolve entity collisions against solid world tiles."""

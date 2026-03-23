@@ -5,10 +5,11 @@ import pygame
 
 
 class UIManager:
-    def __init__(self, player: Player):
+    def __init__(self, player: Player, dig_system):
         """Create and manage UI widgets."""
         self.health_bar = HealthBar(player)
         self.player = player
+        self.dig_system = dig_system
 
     def update(self, dt: float):
         """Update UI widget states."""
@@ -23,7 +24,7 @@ class UIManager:
 
     def render_dig_ui(self, surface: pygame.Surface):
         """Draw digging progress UI when active."""
-        target, ratio = self.player.dig_progress()
+        target, ratio = self.dig_system.get_progress(self.player)
         if target is None:
             return
         tile_x, tile_y = target
