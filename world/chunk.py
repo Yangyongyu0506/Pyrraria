@@ -52,11 +52,11 @@ class Chunk:
         if tile_id == 0:
             return
         tile = TILEREG_TABLE[tile_id]
-        color = tile["color"]
-        if debug:
-            pygame.draw.rect(surf, (255, 0, 255, 255), rect)
-        else:
+        if tile["surf"] is None:
+            color = tile["color"]
             pygame.draw.rect(surf, color, rect)
+        else:
+            surf.blit(tile["surf"], rect)
 
     def surface(self, debug: bool = False) -> pygame.Surface:
         """Return a cached surface for the chunk, rebuilding if dirty."""

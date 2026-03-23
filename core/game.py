@@ -19,7 +19,7 @@ class Game:
         )
         self.logger = logging.getLogger("pyrraria.game")
         pygame.init()
-        self.screen = pygame.display.set_mode((0, 0), pygame.FULLSCREEN)
+        self.screen = pygame.display.set_mode((0, 0), pygame.FULLSCREEN, vsync=1)
         pygame.display.set_caption("Pyrraria")
         self.clock = pygame.time.Clock()
         self.running = True
