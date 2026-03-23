@@ -1,12 +1,15 @@
 from entities.entity import Entity
 from entities.hitbox import Hitbox
+from entities.item_drop import ItemDrop
 from ui.inventory import Inventory
 from core.input import InputFrame
 from world.world import World
 from utils.maths import world_to_screen, lerp, screen_to_world
-from settings import TILE_SIZE
+from settings import PICKUP_RADIUS, TILE_SIZE
 from world.tilereg import TILE_DROPS
+from world.itemreg import ITEMREG_TABLE
 import pygame
+import math
 import numpy as np
 
 
@@ -16,12 +19,14 @@ class Player(Entity):
         x: int,
         y: int,
         world: World,
+        entity_manager=None,
         width: int = TILE_SIZE,
         height: int = 2 * TILE_SIZE,
     ):
         """Create a player entity with movement and health state."""
         super().__init__(x, y)
         self.world = world
+        self.entity_manager = entity_manager
         self.width = width
         self.height = height
         self.hitboxes.append(Hitbox(0, 0, width, height))
@@ -152,20 +157,34 @@ class Player(Entity):
         if 1 in input_frame.mouse_buttons_pressed:
             mx, my = input_frame.mouse_pos
             world_x, world_y = screen_to_world(mx, my, self.world.camx, self.world.camy)
-            tile_id = self.world.get_tile_at(world_x, world_y)
-            if tile_id is not None and tile_id != 0:
-                drop_id = TILE_DROPS.get(tile_id)
-                if drop_id is not None:
-                    self.inventory.add_item(drop_id, 1)
-                self.world.set_tile_at(world_x, world_y, 0)
+            if math.hypot(world_x - self.pos[0], world_y - self.pos[1]) <= PICKUP_RADIUS:
+                tile_id = self.world.get_tile_at(world_x, world_y)
+                if tile_id is not None and tile_id != 0:
+                    drop_id = TILE_DROPS.get(tile_id)
+                    if drop_id is not None:
+                        if self.entity_manager is not None:
+                            tile_x = (world_x // TILE_SIZE) * TILE_SIZE
+                            tile_y = (world_y // TILE_SIZE) * TILE_SIZE
+                            drop = ItemDrop(tile_x, tile_y, drop_id, 1)
+                            self.entity_manager.add_entity(drop)
+                        else:
+                            self.inventory.add_item(drop_id, 1)
+                    self.world.set_tile_at(world_x, world_y, 0)
         if 3 in input_frame.mouse_buttons_pressed:
             selected = self.inventory.get_selected()
-            if selected is not None and selected.count > 0:
+            if (
+                selected is not None
+                and selected.count > 0
+                and ITEMREG_TABLE[selected.item_id]["placeable"]
+            ):
                 mx, my = input_frame.mouse_pos
-                world_x, world_y = screen_to_world(mx, my, self.world.camx, self.world.camy)
-                if self.world.get_tile_at(world_x, world_y) == 0:
-                    self.world.set_tile_at(world_x, world_y, selected.item_id)
-                    self.inventory.remove_selected(1)
+                world_x, world_y = screen_to_world(
+                    mx, my, self.world.camx, self.world.camy
+                )
+                if math.hypot(world_x - self.pos[0], world_y - self.pos[1]) <= PICKUP_RADIUS:
+                    if self.world.get_tile_at(world_x, world_y) == 0:
+                        self.world.set_tile_at(world_x, world_y, selected.item_id)
+                        self.inventory.remove_selected(1)
 
         super().update_pos(dt)
 

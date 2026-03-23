@@ -30,7 +30,7 @@ class Game:
         self.input_manager = InputManager()
         self.entity_manager = EntityManager(self.world)
         spawn_x, spawn_y = self.world.spawn_x, self.world.spawn_y
-        self.player = Player(spawn_x, spawn_y, self.world)
+        self.player = Player(spawn_x, spawn_y, self.world, self.entity_manager)
         self.entity_manager.add_entity(self.player)
         self.ui_manager = UIManager(self.player)
 

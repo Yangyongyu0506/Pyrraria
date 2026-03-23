@@ -1,10 +1,10 @@
 from dataclasses import dataclass
 
 import pygame
-from settings import DIR_ROOT
 import json
 import os
 
+from settings import DIR_ROOT
 from world.itemreg import ITEMREG_TABLE
 
 

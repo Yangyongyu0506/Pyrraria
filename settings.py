@@ -14,8 +14,12 @@ WORLD_H_PX = WORLD_CHUNK_HEIGHT * CHUNK_PX
 
 MAX_ENTITIES = 200
 ACC_G = TILE_SIZE * 10.0  # gravity acceleration in pixels/s^2
+PICKUP_RADIUS = TILE_SIZE * 1.2
+PICKUP_COLLECT_RADIUS = TILE_SIZE * 0.3
+PICKUP_LERP_SPEED = 10.0
 
 HEALTH_BAR_SIZE = (100, 10)
 HEALTH_BAR_POS = (10, 10)
 
 # Core world/physics configuration values used across modules.
+PICKUP_RADIUS = TILE_SIZE * 5
