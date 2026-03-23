@@ -42,7 +42,6 @@ class Game:
             self.input_manager.update()
             self.update(dt)
             self.render()
-
         pygame.quit()
 
     def process_input(self, dt):

@@ -36,7 +36,7 @@ class Player(Entity):
         self.jump_speed = 180
         self.ground_friction = 12.0
         self.air_friction = 2.5
-        self.max_fall_speed = 420.0
+        self.max_fall_speed = 1000.0
 
         # health logics
         self.max_health = 100
@@ -148,6 +148,9 @@ class Player(Entity):
                 self.backpack.swap_with_inventory(self.inventory, 7)
             if pygame.K_9 in input_frame.keys_pressed:
                 self.backpack.swap_with_inventory(self.inventory, 8)
+
+            if pygame.K_q in input_frame.keys_pressed:
+                self.backpack.discard(self.entity_manager, self.pos)
 
         moving_left = pygame.K_a in input_frame.keys_held
         moving_right = pygame.K_d in input_frame.keys_held

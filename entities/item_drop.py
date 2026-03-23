@@ -1,8 +1,9 @@
 import pygame
+from pygame.math import lerp
 
 from entities.entity import Entity
 from entities.hitbox import Hitbox
-from settings import TILE_SIZE, PICKUP_LERP_SPEED
+from settings import TILE_SIZE, PICKUP_LERP
 from world.tilereg import TILEREG_TABLE
 
 
@@ -24,11 +25,11 @@ class ItemDrop(Entity):
         self.width = int(TILE_SIZE * 0.6)
         self.height = int(TILE_SIZE * 0.6)
         self.hitboxes.append(Hitbox(0, 0, self.width, self.height))
-        self.is_noclip = True
+        self.is_noclip = False
         self.color = TILEREG_TABLE.get(item_id, {}).get("color", (220, 220, 220, 255))
-        self.is_picking = False
+        self.is_picking = True
         self.pick_target = None
-        self.pick_speed = PICKUP_LERP_SPEED
+        self.pick_speed = PICKUP_LERP
 
     def update(self, _input_frame, dt: float):
         """Advance time and apply simple physics."""
@@ -38,14 +39,15 @@ class ItemDrop(Entity):
             return
         if self.is_picking and self.pick_target is not None:
             target_x, target_y = self.pick_target
-            self.pos[0] += (target_x - self.pos[0]) * min(1.0, self.pick_speed * dt)
-            self.pos[1] += (target_y - self.pos[1]) * min(1.0, self.pick_speed * dt)
+            self.pos[0] = lerp(self.pos[0], target_x, self.pick_speed)
+            self.pos[1] = lerp(self.pos[1], target_y, self.pick_speed)
         else:
             super().update_pos(dt)
 
     def start_pickup(self, target_x: float, target_y: float):
         """Begin lerping toward the pickup target."""
         self.is_picking = True
+        self.is_noclip = True
         self.pick_target = (target_x, target_y)
 
     def render(self, screen: pygame.Surface, camera):

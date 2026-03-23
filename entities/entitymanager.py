@@ -40,15 +40,15 @@ class EntityManager:
                 entity.post_update(dt)
         self.entities = [entity for entity in self.entities if entity.is_alive]
 
-    def collect_item_drops(self, pickup_radius: float = PICKUP_RADIUS):
+    def collect_item_drops(self, pickup_radius: float = PICKUP_RADIUS, collect_radius: float = PICKUP_COLLECT_RADIUS):
         """Collect nearby item drops into the player's inventory."""
         player = next(
             (entity for entity in self.entities if isinstance(entity, Player)), None
         )
         if player is None:
             return
-        radius_sq = pickup_radius * pickup_radius
-        collect_sq = PICKUP_COLLECT_RADIUS * PICKUP_COLLECT_RADIUS
+        attract_sq = pickup_radius * pickup_radius
+        collect_sq = collect_radius * collect_radius
         for entity in self.entities:
             if not isinstance(entity, ItemDrop):
                 continue
@@ -57,17 +57,18 @@ class EntityManager:
                 player.pos[1] + player.height / 2
             )
             dist_sq = dx * dx + dy * dy
-            if dist_sq <= radius_sq:
+            if collect_sq < dist_sq <= attract_sq:
                 target_x = player.pos[0] + player.width / 2 - entity.width / 2
                 target_y = player.pos[1] + player.height / 2 - entity.height / 2
                 entity.start_pickup(target_x, target_y)
-            if dist_sq > collect_sq:
+            elif dist_sq > attract_sq:
                 continue
-            remaining = player.inventory.add_item(entity.item_id, entity.count)
-            if remaining == 0:
-                entity.is_alive = False
-            else:
-                entity.count = remaining
+            elif dist_sq <= collect_sq:
+                remaining = player.inventory.add_item(entity.item_id, entity.count)
+                if remaining == 0:
+                    entity.is_alive = False
+                else:
+                    entity.count = remaining
 
     def solve_collisions(self, dt):
         """Resolve entity collisions against solid world tiles."""
