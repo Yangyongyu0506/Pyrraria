@@ -1,174 +1,153 @@
 # AGENTS.md
 
-This guide is for agentic coding assistants working in this repo.
-It summarizes how to build/run, how to lint/test, and the code style
-conventions used across the project.
+This file guides agentic coding assistants working in this repository.
+Use it as the default source for build, test, lint, and style behavior.
 
-If you are unsure, follow existing patterns in the files under
-`core/`, `world/`, `entities/`, `systems/`, `ui/`, and `utils/`.
+If unsure, copy existing patterns in `core/`, `world/`, `entities/`,
+`systems/`, `ui/`, and `utils/`.
 
-Cursor rules: none found in `.cursor/rules/` or `.cursorrules`.
-Copilot rules: none found in `.github/copilot-instructions.md`.
+Cursor rules status
+- No rules found in `.cursor/rules/`.
+- No `.cursorrules` file found.
+
+Copilot rules status
+- No `.github/copilot-instructions.md` file found.
 
 ---------------------------------------------------------------------
-Build / Run / Lint / Test
+Build / Run / Test / Lint
 ---------------------------------------------------------------------
 
 Runtime
-- Python 3.12+ (see `pyproject.toml`).
+- Python `>=3.12` (from `pyproject.toml`).
 - Dependencies: `pygame`, `numpy`, `noise`.
 
-Install dependencies (venv)
-- If you use `pip`:
-  - `pip install -r requirements.txt` (mentioned in README, file may
-    be missing in some clones; confirm before relying on it).
-- If you use `uv`:
+Install dependencies
+- With `uv` (preferred if available):
   - `uv sync`
+- With `pip` (README flow):
+  - `pip install -r requirements.txt`
+  - Note: `requirements.txt` may be absent in some clones.
 
-Run the game
-- `python main.py`
-
-One-off world generation
-- `python test.py`
+Run application
+- Start game: `python main.py`
+- One-off world generation script: `python test.py`
 
 Tests
-- There is no configured test runner in this repository.
-- If you add pytest later, common usage is:
-  - `python -m pytest`
-  - Single test file: `python -m pytest path/to/test_file.py`
-  - Single test: `python -m pytest path/to/test_file.py::TestClass::test_name`
+- There is currently no configured test suite in this repo.
+- If tests are added, use `pytest` conventions:
+  - Run all tests: `python -m pytest`
+  - Run one file: `python -m pytest tests/test_file.py`
+  - Run one test function: `python -m pytest tests/test_file.py::test_name`
+  - Run one test method:
+    `python -m pytest tests/test_file.py::TestClass::test_name`
+  - Useful flags while iterating: `-q`, `-x`, `-k <expr>`
 
-Linting / Formatting / Type checking
-- No configured lint or format tool (no ruff/black/flake8/mypy found).
-- If you add one, document it here and keep it consistent with existing
-  patterns (see Style Guide below).
-
----------------------------------------------------------------------
-Project Structure
----------------------------------------------------------------------
-
-- `main.py`: entry point (create `Game`, call `run()`).
-- `core/`: game loop, camera, input.
-- `world/`: chunk streaming, terrain generation, tile registry.
-- `entities/`: entities, collision, player logic.
-- `systems/`: input, digging, placement, pickup, physics, discard.
-- `ui/`: health bar, inventory HUD.
-- `utils/`: small math helpers.
-- `settings.py`: shared constants.
+Lint / format / type check
+- No formatter, linter, or type-checker is configured today.
+- Do not introduce a new toolchain unless explicitly requested.
+- If tooling is added later, document exact commands here.
 
 ---------------------------------------------------------------------
-Style Guide (follow existing patterns)
+Repository Map
+---------------------------------------------------------------------
+
+- `main.py`: game entrypoint (`Game` creation + `run`).
+- `core/`: loop orchestration, camera, input framing.
+- `world/`: chunk storage/streaming, generation, tile registry, tools.
+- `entities/`: base entity logic, player, drops, collision manager.
+- `systems/`: input, digging, placement, pickup, discard, physics.
+- `ui/`: HUD, inventory, backpack rendering and interaction.
+- `utils/`: math helpers and coordinate conversions.
+- `settings.py`: gameplay and world constants.
+
+---------------------------------------------------------------------
+Code Style Guidelines
 ---------------------------------------------------------------------
 
 General
-- Prefer clear, simple logic over clever abstractions.
-- Keep functions short; use helpers when blocks grow large.
-- Use docstrings for classes and methods; most functions already have
-  one-line summaries.
-- Keep side effects explicit (I/O, pygame calls, file writes).
+- Prefer straightforward, explicit code over abstraction-heavy designs.
+- Keep functions focused; extract helpers once logic becomes long/noisy.
+- Keep game rules in systems; keep entities mostly stateful.
+- Make side effects obvious (disk I/O, pygame draws, logging, threads).
 
 Formatting
-- 4-space indents.
-- Keep lines reasonably short; wrap long calls with parentheses.
-- Use trailing commas when multi-line argument lists are present.
-- Avoid adding unnecessary comments; use docstrings instead.
+- Use 4-space indentation.
+- Keep lines reasonably short; break long calls with parentheses.
+- Use trailing commas in multiline literals/calls.
+- Avoid broad rewrites that only change formatting.
 
 Imports
-- Standard library first, third-party next, local imports last.
-- Use explicit module imports (e.g. `from world.world import World`).
-- Prefer absolute imports rooted at repo modules (no relative imports).
-- Group imports with a blank line between groups when mixing types.
+- Group imports: stdlib, third-party, local modules.
+- Use absolute imports rooted at project packages.
+- Avoid relative imports unless a module already uses them.
+- Prefer explicit imports over wildcard imports.
 
-Types
-- Use Python 3.12 type hints; prefer built-in generics:
-  - `list[Type]`, `dict[Key, Value]`, `tuple[int, int]`.
-- Use `X | None` for optional types.
-- Add types to public APIs and cross-module boundaries first.
+Typing
+- Use Python 3.12 type hints for public and cross-module APIs first.
+- Prefer built-in generic syntax (`list[int]`, `dict[str, int]`).
+- Use `X | None` instead of `Optional[X]`.
+- Add/keep return types where behavior is not obvious.
 
 Naming
 - Modules/files: `snake_case.py`.
-- Classes: `PascalCase` (e.g. `EntityManager`).
-- Functions/variables: `snake_case`.
+- Classes: `PascalCase`.
+- Functions, methods, variables: `snake_case`.
 - Constants: `UPPER_SNAKE_CASE` (see `settings.py`).
+- Keep names domain-oriented (`chunk`, `tile`, `spawn`, `hitbox`, etc.).
 
-Docstrings
-- Use triple-quoted, short summaries on classes and methods.
-- Focus on behavior and side effects rather than parameters only.
+Docstrings and comments
+- Use concise triple-quoted docstrings on classes/methods.
+- Prefer behavior-focused docs over parameter dumps.
+- Add comments only for non-obvious intent or invariants.
 
-Error Handling
-- Use narrow exceptions (e.g., `FileNotFoundError`, `ValueError`).
-- Prefer returning safe defaults rather than crashing (see
-  `World.load_spawn_point`).
-- If you must log, use the module or injected logger, not `print`.
+Error handling
+- Catch narrow exceptions (`FileNotFoundError`, `ValueError`, etc.).
+- Prefer safe fallbacks for recoverable runtime issues.
+- Do not silently swallow errors unless fallback is intentional.
+- Use logging for operational issues; avoid `print` in runtime paths.
 
 Logging
-- The game loop configures logging in `Game.__init__`.
-- Use `logging.getLogger("pyrraria.<area>")` where needed.
-- Avoid noisy logs in tight loops; log on state changes only.
+- Reuse module/game loggers (e.g., `logging.getLogger("pyrraria.*")`).
+- Keep logging low-noise inside per-frame or per-tile loops.
+- Log state transitions and failures, not every update tick.
 
-Data and Persistence
-- World chunks are stored under `user/world_data/<world>/`.
-- Inventory saves to `user/player/inventory.json`.
-- Backpack saves to `user/player/backpack.json`.
-- Prefer existing save/load helpers in `Chunk` and `Inventory`.
+Data persistence
+- World/chunk saves live under `user/world_data/<world>/`.
+- Player inventory/backpack lives under `user/player/`.
+- Reuse existing save/load helpers before adding new file formats.
 
-Systems
-- Use systems to own game logic (digging, pickup, placement, input).
-- Keep `Player` focused on state; avoid embedding new game rules there.
-- Route tool checks and tile breaking through `DigSystem`.
+Pygame and performance
+- Use `pygame.Surface`/`pygame.Rect` consistently.
+- Avoid heavy allocations in hot paths (update/render loops).
+- Cache transformed/scaled assets when screen size is unchanged.
+- Keep render/update deterministic unless randomness is intentional.
 
-Concurrency
-- Chunk streaming uses a background thread (`World.chunk_io`).
-- Protect shared state using locks (see `ChunkManager.chunk_lock`).
-- Avoid blocking the main thread with I/O.
+World and coordinates
+- World coordinates are pixel-based; tile size comes from `settings.py`.
+- Camera origin is top-left in screen space.
+- Use helpers in `utils/maths.py` for conversions and interpolation.
+- Preserve world wrapping behavior when editing chunk/tile logic.
 
-Coordinate Systems
-- World space uses pixels; tile size in `settings.py`.
-- Camera origin is the top-left of the screen.
-- Use helpers in `utils/maths.py` for conversions.
+Collision and physics
+- Position integration is handled in entity update methods.
+- Collision resolution is centralized in `EntityManager`.
+- Keep physics deterministic and frame-rate aware (`dt` based updates).
 
-Physics and Collision
-- Entities update positions in `Entity.update_pos`.
-- Collisions are resolved in `EntityManager.solve_collisions`.
-- Keep collision logic deterministic; avoid random in core physics.
+Systems architecture
+- Route input effects through systems (`DigSystem`, `PickupSystem`, etc.).
+- Avoid embedding new gameplay rules directly in `Player` when avoidable.
+- Keep system APIs narrow and composable from the main game loop.
 
-Pygame Usage
-- Use `pygame.Surface` and `pygame.Rect` consistently.
-- Convert surfaces when needed (see `Chunk.surface`).
-- Avoid expensive per-frame allocations where possible.
-
-Tiles
-- Tile metadata is in `world/tilereg.py`.
-- Use tile IDs consistently (0 is air).
-- When adding tiles, update `TILEREG_TABLE` and `TILE_DROPS`.
-
-Items and Tools
-- Item registry lives in `entities/itemreg.py`.
-- Tools are defined in `world/tools.py` and are unstackable.
-- Digging requires a tool with `can_dig`.
-
-UI
-- UI classes live in `ui/` and are lightweight.
-- Rendering uses simple primitives; keep HUD fast.
-- Backpack UI toggles with `E`; use `h/j/k/l` for cursor and `1-9` to swap with hotbar.
-
-Testing Additions (if you add tests)
-- Prefer pytest; organize under `tests/`.
-- Keep tests deterministic; avoid real-time waits.
-- Add a single-test command in this file when tests exist.
+Concurrency and I/O
+- Chunk streaming uses a background thread in `World.chunk_io`.
+- Guard shared chunk state with existing locking strategy.
+- Avoid blocking operations on the main thread.
 
 ---------------------------------------------------------------------
-Common Tasks
+Agent Workflow Notes
 ---------------------------------------------------------------------
 
-- Run game: `python main.py`
-- Generate world (dev): `python test.py`
-- Adjust constants: edit `settings.py`
-
----------------------------------------------------------------------
-Agent Notes
----------------------------------------------------------------------
-
-- Do not introduce a new toolchain unless requested.
-- Respect existing patterns; this is a small prototype codebase.
-- If you add linting or tests, update this file accordingly.
+- Make minimal, targeted changes; avoid unrelated refactors.
+- Preserve backward-compatible behavior unless asked otherwise.
+- When adding tests, prefer deterministic unit tests under `tests/`.
+- If you add tooling (pytest/ruff/mypy/etc.), update this file.

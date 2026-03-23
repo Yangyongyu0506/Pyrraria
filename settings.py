@@ -24,3 +24,5 @@ HEALTH_BAR_POS = (10, 10)
 
 # Core world/physics configuration values used across modules.
 PICKUP_RADIUS = TILE_SIZE * 5
+
+SLOT_SIZE = 32

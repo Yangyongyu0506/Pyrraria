@@ -4,7 +4,7 @@ import pygame
 import json
 import os
 
-from settings import DIR_ROOT
+from settings import DIR_ROOT, SLOT_SIZE
 from entities.itemreg import ITEMREG_TABLE
 
 
@@ -120,27 +120,28 @@ class Inventory:
 
     def render(self, surface: pygame.Surface):
         """Draw a minimal hotbar for the player inventory."""
-        slot_size = 32
         padding = 6
         total_slots = self.hotbar_size
-        total_width = total_slots * slot_size + (total_slots - 1) * padding
+        total_width = total_slots * SLOT_SIZE + (total_slots - 1) * padding
         start_x = (surface.get_width() - total_width) // 2
-        y = surface.get_height() - slot_size - 12
+        y = surface.get_height() - SLOT_SIZE - 12
         for i in range(total_slots):
-            x = start_x + i * (slot_size + padding)
-            rect = pygame.Rect(x, y, slot_size, slot_size)
+            x = start_x + i * (SLOT_SIZE + padding)
+            rect = pygame.Rect(x, y, SLOT_SIZE, SLOT_SIZE)
             pygame.draw.rect(surface, (30, 30, 30), rect)
             border_color = (
                 (255, 255, 255) if i == self.selected_index else (120, 120, 120)
             )
-            pygame.draw.rect(surface, border_color, rect, 2)
             stack = self.slots[i]
             if stack is not None:
-                pygame.draw.rect(
-                    surface,
-                    ITEMREG_TABLE[stack.item_id]["color"],
-                    rect.inflate(-4, -4),
-                )
+                if ITEMREG_TABLE[stack.item_id]["surf"]:
+                    surface.blit(ITEMREG_TABLE[stack.item_id]["surf"], rect.topleft)
+                else:
+                    pygame.draw.rect(
+                        surface,
+                        ITEMREG_TABLE[stack.item_id]["color"],
+                        rect.inflate(-4, -4),
+                    )
                 text = self.font.render(str(stack.count), True, (220, 220, 220))
                 surface.blit(text, (x + 4, y + 8))
                 if i == self.selected_index:
@@ -148,6 +149,7 @@ class Inventory:
                         ITEMREG_TABLE[stack.item_id]["name"], True, (255, 255, 255)
                     )
                     surface.blit(text, (x, y - 20))
+            pygame.draw.rect(surface, border_color, rect, 2)
 
     def on_exit(self):
         """Save inventory items to json files."""
