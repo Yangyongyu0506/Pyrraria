@@ -4,7 +4,7 @@ import pygame
 
 from settings import DIR_ROOT
 from ui.inventory import Inventory, ItemStack
-from world.itemreg import ITEMREG_TABLE
+from entities.itemreg import ITEMREG_TABLE
 
 
 class Backpack(Inventory):

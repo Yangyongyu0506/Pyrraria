@@ -108,6 +108,7 @@ Logging
 Data and Persistence
 - World chunks are stored under `user/world_data/<world>/`.
 - Inventory saves to `user/player/inventory.json`.
+- Backpack saves to `user/player/backpack.json`.
 - Prefer existing save/load helpers in `Chunk` and `Inventory`.
 
 Concurrency
@@ -138,6 +139,7 @@ Tiles
 UI
 - UI classes live in `ui/` and are lightweight.
 - Rendering uses simple primitives; keep HUD fast.
+- Backpack UI toggles with `E`; use `h/j/k/l` for cursor and `1-9` to swap with hotbar.
 
 Testing Additions (if you add tests)
 - Prefer pytest; organize under `tests/`.

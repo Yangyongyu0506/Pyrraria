@@ -7,6 +7,8 @@ Pyrraria is a Python parody of the renowned 2D sandbox game Terraria. It is a py
 - Large, continuous cavern generation
 - Background chunk IO thread with streaming loads/unloads
 - Player entity with gravity, jump, collision, and fall damage
+- Tile drops spawn as entities and are collected on proximity
+- Backpack storage with keyboard navigation and swaps
 
 ## Requirements
 - Python 3.12+
@@ -34,6 +36,9 @@ python main.py
 - `A`, `D`: move the player
 - `W` or `Space`: jump
 - Left mouse button: set the clicked tile to air (remove)
+- `E`: toggle backpack
+- `H`, `J`, `K`, `L`: move backpack cursor
+- `1`-`9`: swap backpack cursor slot with hotbar slot (when open)
 - Window close: quit and save chunks
 
 ## Project structure
@@ -50,6 +55,7 @@ python main.py
 - Logs include chunk load/unload events and player position (throttled).
 - Player fall damage triggers on hard landings.
 - World size and tuning constants are in `settings.py`.
+- Backpack saves to `user/player/backpack.json` on exit.
 
 ## Roadmap ideas
 - Hook up procedural generation for missing chunks

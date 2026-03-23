@@ -6,9 +6,10 @@ from ui.inventory import Inventory
 from core.input import InputFrame
 from world.world import World
 from utils.maths import world_to_screen, lerp, screen_to_world
-from settings import PICKUP_RADIUS, TILE_SIZE
+from settings import DIG_BASE_TIME, PICKUP_RADIUS, TILE_SIZE
 from world.tilereg import TILE_DROPS
-from world.itemreg import ITEMREG_TABLE
+from world.tilereg import TILEREG_TABLE
+from entities.itemreg import ITEMREG_TABLE
 import pygame
 import math
 import numpy as np
@@ -50,6 +51,15 @@ class Player(Entity):
         # inventory
         self.inventory = Inventory()
         self.backpack = Backpack()
+
+        if self.inventory.is_empty():
+            self.inventory.add_item(101, 1)
+            self.inventory.add_item(102, 1)
+            self.inventory.select_slot(0)
+
+        self.dig_target = None
+        self.dig_timer = 0.0
+        self.dig_required = 0.0
 
         # fonts
         self.font = pygame.font.SysFont(None, 24)
@@ -189,25 +199,41 @@ class Player(Entity):
             if pygame.K_9 in input_frame.keys_pressed:
                 self.inventory.select_slot(8)
 
-        if 1 in input_frame.mouse_buttons_pressed:
-            mx, my = input_frame.mouse_pos
-            world_x, world_y = screen_to_world(mx, my, self.world.camx, self.world.camy)
-            if (
-                math.hypot(world_x - self.pos[0], world_y - self.pos[1])
-                <= PICKUP_RADIUS
-            ):
-                tile_id = self.world.get_tile_at(world_x, world_y)
-                if tile_id is not None and tile_id != 0:
-                    drop_id = TILE_DROPS.get(tile_id)
-                    if drop_id is not None:
-                        if self.entity_manager is not None:
-                            tile_x = (world_x // TILE_SIZE) * TILE_SIZE
-                            tile_y = (world_y // TILE_SIZE) * TILE_SIZE
-                            drop = ItemDrop(tile_x, tile_y, drop_id, 1)
-                            self.entity_manager.add_entity(drop)
-                        else:
-                            self.inventory.add_item(drop_id, 1)
-                    self.world.set_tile_at(world_x, world_y, 0)
+        if 1 in input_frame.mouse_buttons_held and not self.backpack.is_open:
+            selected = self.inventory.get_selected()
+            item_def = ITEMREG_TABLE.get(selected.item_id, {}) if selected else {}
+            tool = item_def.get("tool") if selected else None
+            if tool is None or not tool.can_dig:
+                self.reset_dig()
+            else:
+                mx, my = input_frame.mouse_pos
+                world_x, world_y = screen_to_world(
+                    mx, my, self.world.camx, self.world.camy
+                )
+                if (
+                    math.hypot(world_x - self.pos[0], world_y - self.pos[1])
+                    > PICKUP_RADIUS
+                ):
+                    self.reset_dig()
+                else:
+                    tile_id = self.world.get_tile_at(world_x, world_y)
+                    if tile_id is None or tile_id == 0:
+                        self.reset_dig()
+                    else:
+                        tile_x = (world_x // TILE_SIZE) * TILE_SIZE
+                        tile_y = (world_y // TILE_SIZE) * TILE_SIZE
+                        target = (tile_x, tile_y)
+                        if target != self.dig_target:
+                            self.dig_target = target
+                            self.dig_timer = 0.0
+                            hardness = TILEREG_TABLE[tile_id]["hardness"]
+                            self.dig_required = tool.dig_time(hardness, DIG_BASE_TIME)
+                        self.dig_timer += dt
+                        if self.dig_timer >= self.dig_required:
+                            self.break_tile(tile_x, tile_y, tile_id)
+                            self.reset_dig()
+        if 1 in input_frame.mouse_buttons_released:
+            self.reset_dig()
         if 3 in input_frame.mouse_buttons_pressed:
             selected = self.inventory.get_selected()
             if (
@@ -228,6 +254,29 @@ class Player(Entity):
                         self.inventory.remove_selected(1)
 
         super().update_pos(dt)
+
+    def break_tile(self, tile_x: float, tile_y: float, tile_id: int):
+        """Remove a tile and spawn a drop."""
+        drop_id = TILE_DROPS.get(tile_id)
+        if drop_id is not None:
+            if self.entity_manager is not None:
+                drop = ItemDrop(tile_x, tile_y, drop_id, 1)
+                self.entity_manager.add_entity(drop)
+            else:
+                self.inventory.add_item(drop_id, 1)
+        self.world.set_tile_at(tile_x, tile_y, 0)
+
+    def reset_dig(self):
+        """Clear digging state."""
+        self.dig_target = None
+        self.dig_timer = 0.0
+        self.dig_required = 0.0
+
+    def dig_progress(self) -> tuple[tuple[float, float] | None, float]:
+        """Return dig target and progress ratio (0.0-1.0)."""
+        if self.dig_target is None or self.dig_required <= 0:
+            return None, 0.0
+        return self.dig_target, min(1.0, self.dig_timer / self.dig_required)
 
     def post_update(self, dt: float):
         """Apply post-collision effects such as landing damage."""

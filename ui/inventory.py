@@ -5,7 +5,7 @@ import json
 import os
 
 from settings import DIR_ROOT
-from world.itemreg import ITEMREG_TABLE
+from entities.itemreg import ITEMREG_TABLE
 
 
 @dataclass
@@ -49,23 +49,30 @@ class Inventory:
         """Add items to inventory; returns leftover count not stored."""
         if item_id <= 0 or count <= 0:
             return count
+        item_def = ITEMREG_TABLE.get(item_id, {})
+        stackable = item_def.get("stackable", True)
         remaining = count
-        for slot in self.slots:
-            if slot and slot.item_id == item_id and slot.count < self.max_stack:
-                space = self.max_stack - slot.count
-                to_add = min(space, remaining)
-                slot.count += to_add
-                remaining -= to_add
-                if remaining == 0:
-                    return 0
+        if stackable:
+            for slot in self.slots:
+                if slot and slot.item_id == item_id and slot.count < self.max_stack:
+                    space = self.max_stack - slot.count
+                    to_add = min(space, remaining)
+                    slot.count += to_add
+                    remaining -= to_add
+                    if remaining == 0:
+                        return 0
         for i, slot in enumerate(self.slots):
             if slot is None:
-                to_add = min(self.max_stack, remaining)
+                to_add = 1 if not stackable else min(self.max_stack, remaining)
                 self.slots[i] = ItemStack(item_id=item_id, count=to_add)
                 remaining -= to_add
                 if remaining == 0:
                     return 0
         return remaining
+
+    def is_empty(self) -> bool:
+        """Return True if all slots are empty."""
+        return all(slot is None for slot in self.slots)
 
     def remove_selected(self, count: int = 1) -> bool:
         """Remove items from the selected stack; returns True if removed."""
